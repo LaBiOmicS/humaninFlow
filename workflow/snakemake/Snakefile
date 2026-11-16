@@ -1,0 +1,108 @@
+# ==============================================================================
+# HumaninFinder Pipeline (Snakemake)
+# Data-Agnostic, Portable & Reproducible MDP Discovery Workflow
+# ==============================================================================
+
+import os
+
+configfile: "config/config.yaml"
+
+# Resolve inputs and parameters
+INPUT_FASTA = config["input_fasta"]
+METADATA    = config.get("metadata", "")
+OUTDIR      = config["outdir"]
+COMMAND     = config.get("command", "predict")
+TABLE       = config.get("table", "auto")
+CIRCULAR    = config.get("circular", True)
+ALL_CAND    = config.get("all_candidates", False)
+BIN         = config.get("humanin_finder_bin", "humanin-finder")
+
+# Flags
+flags = []
+if TABLE:
+    flags.append(f"-g {TABLE}")
+if CIRCULAR:
+    flags.append("--circular")
+if ALL_CAND and COMMAND == "predict":
+    flags.append("--all-candidates")
+if config.get("no_hmm", False):
+    flags.append("--no-hmm")
+if config.get("no_rescue", False):
+    flags.append("--no-rescue")
+if config.get("no_shlp", False):
+    flags.append("--no-shlp")
+if config.get("no_synteny", False):
+    flags.append("--no-synteny")
+
+CLI_FLAGS = " ".join(flags)
+
+# Prefix calculation
+PREFIX_NAME = os.path.splitext(os.path.basename(INPUT_FASTA))[0]
+if PREFIX_NAME.endswith(".fa") or PREFIX_NAME.endswith(".fasta"):
+    PREFIX_NAME = os.path.splitext(PREFIX_NAME)[0]
+
+rule all:
+    input:
+        summary_csv     = os.path.join(OUTDIR, "summary", "cohort_humanin_summary.csv"),
+        summary_tsv     = os.path.join(OUTDIR, "summary", "cohort_humanin_summary.tsv"),
+        unique_peptides = os.path.join(OUTDIR, "summary", "cohort_unique_peptides.fasta"),
+        report          = os.path.join(OUTDIR, "summary", "COHORT_ANALYSIS_REPORT.md")
+
+rule lint:
+    input:
+        fasta = INPUT_FASTA
+    output:
+        lint_done = os.path.join(OUTDIR, "lint", f"{PREFIX_NAME}.lint.done")
+    shell:
+        """
+        mkdir -p $(dirname {output.lint_done})
+        {BIN} lint "{input.fasta}"
+        touch {output.lint_done}
+        """
+
+rule predict:
+    input:
+        fasta     = INPUT_FASTA,
+        lint_done = os.path.join(OUTDIR, "lint", f"{PREFIX_NAME}.lint.done")
+    output:
+        csv   = os.path.join(OUTDIR, "raw_predictions", f"{PREFIX_NAME}_results.csv"),
+        fasta = os.path.join(OUTDIR, "raw_predictions", f"{PREFIX_NAME}_results.fasta"),
+        gff3  = os.path.join(OUTDIR, "raw_predictions", f"{PREFIX_NAME}_results.gff3"),
+        bed   = os.path.join(OUTDIR, "raw_predictions", f"{PREFIX_NAME}_results.bed"),
+        json  = os.path.join(OUTDIR, "raw_predictions", f"{PREFIX_NAME}_run.json")
+    params:
+        out_prefix = os.path.join(OUTDIR, "raw_predictions", PREFIX_NAME),
+        flags      = CLI_FLAGS,
+        cmd        = COMMAND
+    shell:
+        """
+        mkdir -p $(dirname {params.out_prefix})
+        {BIN} {params.cmd} \
+            -i "{input.fasta}" \
+            -o "{params.out_prefix}" \
+            {params.flags}
+        """
+
+rule summarize:
+    input:
+        csv   = os.path.join(OUTDIR, "raw_predictions", f"{PREFIX_NAME}_results.csv"),
+        fasta = os.path.join(OUTDIR, "raw_predictions", f"{PREFIX_NAME}_results.fasta")
+    output:
+        summary_csv     = os.path.join(OUTDIR, "summary", "cohort_humanin_summary.csv"),
+        summary_tsv     = os.path.join(OUTDIR, "summary", "cohort_humanin_summary.tsv"),
+        unique_peptides = os.path.join(OUTDIR, "summary", "cohort_unique_peptides.fasta"),
+        report          = os.path.join(OUTDIR, "summary", "COHORT_ANALYSIS_REPORT.md")
+    params:
+        meta_flag = f"--metadata '{METADATA}'" if METADATA and os.path.exists(METADATA) else "",
+        script    = os.path.join(os.path.dirname(workflow.snakefile), "scripts", "merge_and_report.py")
+    shell:
+        """
+        python3 {params.script} \
+            --results-csv "{input.csv}" \
+            --results-fasta "{input.fasta}" \
+            {params.meta_flag} \
+            --out-csv "{output.summary_csv}" \
+            --out-tsv "{output.summary_tsv}" \
+            --out-peptides "{output.unique_peptides}" \
+            --out-report "{output.report}"
+        """

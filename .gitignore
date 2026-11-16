@@ -1,0 +1,28 @@
+# Nextflow
+.nextflow/
+.nextflow.log*
+work/
+
+# Snakemake
+.snakemake/
+
+# Outputs and results
+results/
+*.sif
+*.tar.gz
+
+# Python & environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env
+
+# MkDocs build output
+site/
+
+# OS files
+.DS_Store
+Thumbs.db
