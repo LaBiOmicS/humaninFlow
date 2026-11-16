@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>humaninFlow — Scalable Workflows for Humanin & MDP Discovery</title>
+<meta name="description" content="humaninFlow is a dual-engine workflow pipeline (Nextflow DSL2 & Snakemake) for high-throughput, reproducible and automated prediction of Humanin and SHLP1-6 across mitogenomes, contigs and nuclear assemblies.">
+<meta property="og:title" content="humaninFlow — Workflows for Humanin & MDP Discovery">
+<meta property="og:description" content="Dual-engine pipeline (Nextflow DSL2 & Snakemake) for high-throughput, data-agnostic prediction of Humanin and SHLP1-6.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://labiomics.github.io/humaninFlow/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230e7c6f'/%3E%3Cpath d='M6 16h20M16 6v20M9 10l14 12' stroke='%23fffdf9' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='9' cy='10' r='3' fill='%23f0a04b'/%3E%3Ccircle cx='23' cy='22' r='3' fill='%233cc7b2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f5f0;
+  --paper: #fffdf9;
+  --ink: #142321;
+  --ink-2: #3c4d4a;
+  --muted: #6a7a76;
+  --line: #e2ded4;
+  --line-2: #ece8df;
+  --teal: #0e7c6f;
+  --teal-ink: #0a5d54;
+  --teal-soft: #e1f0ec;
+  --amber: #c26a12;
+  --amber-soft: #f9ead8;
+  --gene: #d6dcd9;
+  --dark: #102422;
+  --dark-2: #173230;
+  --dark-line: #24423f;
+  --dark-text: #dfeae7;
+  --dark-muted: #8ea8a2;
+  --term-teal: #4fd1bd;
+  --term-amber: #f2a54a;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius: 14px;
+  --shadow: 0 1px 2px rgba(20,35,33,.05), 0 8px 24px -12px rgba(20,35,33,.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1615; --paper: #12201e; --ink: #e5eeeb; --ink-2: #bccbc7; --muted: #8aa09b;
+    --line: #22332f; --line-2: #1b2a28; --teal: #3cc7b2; --teal-ink: #6fdcca; --teal-soft: #12302c;
+    --amber: #f0a04b; --amber-soft: #33240f; --gene: #2f423f; --dark: #081110; --dark-2: #0f1d1b;
+    --dark-line: #1f3532; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1615; --paper: #12201e; --ink: #e5eeeb; --ink-2: #bccbc7; --muted: #8aa09b;
+  --line: #22332f; --line-2: #1b2a28; --teal: #3cc7b2; --teal-ink: #6fdcca; --teal-soft: #12302c;
+  --amber: #f0a04b; --amber-soft: #33240f; --gene: #2f423f; --dark: #081110; --dark-2: #0f1d1b;
+  --dark-line: #1f3532; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16.5px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+a { color: var(--teal); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:hover { color: var(--teal-ink); }
+code, pre, .mono { font-family: var(--mono); }
+code { font-size: .86em; background: var(--line-2); padding: .12em .4em; border-radius: 5px; color: var(--ink); }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 720px) { .wrap { padding: 0 28px; } }
+
+/* ---------- Navigation ---------- */
+.nav { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: saturate(140%) blur(10px); border-bottom: 1px solid transparent; transition: border-color .2s; }
+.nav.scrolled { border-bottom-color: var(--line); }
+.nav .wrap { display: flex; align-items: center; height: 60px; gap: 20px; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-weight: 700; letter-spacing: -.01em; font-size: 1.05rem; }
+.brand svg { width: 30px; height: 30px; }
+.brand small { font: 500 .72rem var(--mono); color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+.nav-links { margin-left: auto; display: flex; align-items: center; gap: 20px; }
+.nav-links a { color: var(--ink-2); text-decoration: none; font-size: .93rem; font-weight: 500; }
+.nav-links a:hover { color: var(--ink); }
+.nav-links .pill { color: var(--paper); background: var(--teal-ink); padding: 7px 14px; border-radius: 9px; font-weight: 600; }
+.nav-links .pill:hover { background: var(--teal); }
+.icon-btn { background: none; border: 1px solid var(--line); border-radius: 9px; width: 36px; height: 36px; display: grid; place-items: center; color: var(--ink-2); cursor: pointer; }
+.icon-btn svg { width: 17px; height: 17px; }
+
+/* ---------- Hero ---------- */
+.hero { padding: 50px 0 40px; }
+.hero-tag { display: inline-flex; align-items: center; gap: 8px; font: 500 .82rem var(--mono); color: var(--teal-ink); background: var(--teal-soft); padding: 4px 12px; border-radius: 999px; margin-bottom: 18px; }
+.hero h1 { font-size: clamp(2.1rem, 4.2vw, 3.2rem); line-height: 1.15; letter-spacing: -.03em; margin: 0 0 16px; font-weight: 700; color: var(--ink); }
+.hero h1 em { font-style: normal; color: var(--teal); }
+.hero p.lead { font-size: 1.18rem; color: var(--ink-2); max-width: 780px; margin: 0 0 28px; line-height: 1.55; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 34px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: .95rem; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: all .15s; }
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-primary:hover { background: var(--teal-ink); color: #fff; }
+.btn-secondary { background: var(--paper); color: var(--ink); border-color: var(--line); }
+.btn-secondary:hover { border-color: var(--muted); }
+
+/* ---------- Code & Tabs ---------- */
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); margin-bottom: 24px; }
+.tab-header { display: flex; gap: 8px; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 18px; }
+.tab-btn { background: none; border: none; padding: 6px 14px; border-radius: 8px; font: 600 .9rem var(--sans); color: var(--muted); cursor: pointer; }
+.tab-btn.active { background: var(--teal-soft); color: var(--teal-ink); }
+.terminal { background: var(--dark); color: var(--dark-text); border-radius: 10px; padding: 16px 20px; font-family: var(--mono); font-size: .88rem; overflow-x: auto; position: relative; border: 1px solid var(--dark-line); }
+.terminal pre { margin: 0; line-height: 1.6; }
+.terminal .copy-btn { position: absolute; top: 12px; right: 12px; background: var(--dark-2); color: var(--dark-muted); border: 1px solid var(--dark-line); border-radius: 6px; padding: 4px 10px; font: 500 .75rem var(--mono); cursor: pointer; }
+.terminal .copy-btn:hover { color: #fff; border-color: var(--term-teal); }
+.terminal .prompt { color: var(--term-teal); user-select: none; }
+.terminal .comment { color: var(--dark-muted); }
+
+/* ---------- Architecture Grid ---------- */
+.sec-head { margin-bottom: 24px; }
+.sec-head h2 { font-size: 1.85rem; letter-spacing: -.02em; margin: 0 0 8px; color: var(--ink); }
+.sec-head p { color: var(--muted); margin: 0; font-size: 1.05rem; }
+.grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; }
+.feature { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; transition: border-color .2s; }
+.feature:hover { border-color: var(--teal); }
+.feature-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--teal-soft); color: var(--teal); display: grid; place-items: center; margin-bottom: 14px; font-weight: bold; }
+.feature h3 { margin: 0 0 6px; font-size: 1.15rem; color: var(--ink); }
+.feature p { margin: 0; font-size: .93rem; color: var(--ink-2); line-height: 1.55; }
+
+/* ---------- Workflow Schematic Diagram ---------- */
+.schematic { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px; margin: 30px 0; text-align: center; }
+.diagram-box { display: flex; flex-direction: column; gap: 16px; align-items: center; max-width: 820px; margin: 0 auto; }
+.stage { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 14px 20px; background: var(--bg); display: flex; align-items: center; justify-content: space-between; }
+.stage-title { font-weight: 700; color: var(--ink); font-size: .98rem; text-align: left; }
+.stage-desc { font-size: .86rem; color: var(--muted); font-family: var(--mono); }
+.arrow-down { color: var(--teal); font-size: 1.3rem; }
+
+/* ---------- Table ---------- */
+table { width: 100%; border-collapse: collapse; font-size: .92rem; margin: 18px 0; }
+th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+th { background: var(--line-2); color: var(--ink); font-weight: 600; }
+tr:hover td { background: var(--paper); }
+
+/* ---------- Footer ---------- */
+footer { background: var(--dark); color: var(--dark-text); padding: 50px 0 30px; margin-top: 70px; border-top: 1px solid var(--dark-line); }
+footer a { color: var(--term-teal); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+footer .brand { color: #fff; margin-bottom: 12px; }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 30px; font-size: .9rem; }
+@media (max-width: 768px) { .footer-grid { grid-template-columns: 1fr; } }
+.footer-col h4 { margin: 0 0 12px; color: #fff; font-size: 1rem; }
+.footer-col p { margin: 0 0 8px; color: var(--dark-muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="wrap">
+    <a href="#" class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0e7c6f"/><path d="M6 16h20M16 6v20M9 10l14 12" stroke="#fffdf9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="10" r="3" fill="#f0a04b"/><circle cx="23" cy="22" r="3" fill="#3cc7b2"/></svg>
+      <span>humaninFlow</span>
+      <small>v1.0.0</small>
+    </a>
+    <div class="nav-links">
+      <a href="#quickstart">Quick Start</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#recipes">Recipes</a>
+      <a href="#outputs">Outputs</a>
+      <a href="#citation">Citation</a>
+      <button class="icon-btn" id="theme" aria-label="Toggle theme" title="Toggle dark/light mode">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+      </button>
+      <a href="https://github.com/LaBiOmicS/humaninFlow" class="pill" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="hero-tag">🧬 Dual-Engine Workflow Pipeline • Nextflow DSL2 &amp; Snakemake</div>
+    <h1>Scalable discovery of <em>Humanin</em> and mitochondrial micropeptides.</h1>
+    <p class="lead">
+      <strong>humaninFlow</strong> is a data-agnostic, publication-grade workflow framework designed to locate, validate and annotate <strong>Humanin</strong> and <strong>SHLP1–6</strong> across circular mitogenomes, large population cohorts, and whole nuclear genome assemblies.
+    </p>
+    <div class="hero-actions">
+      <a href="#quickstart" class="btn btn-primary">Get Started in 5 Min</a>
+      <a href="https://github.com/LaBiOmicS/humaninFlow" class="btn btn-secondary" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+      <a href="https://github.com/LaBiOmicS/humaninfinder" class="btn btn-secondary" target="_blank" rel="noopener">HumaninFinder Engine</a>
+    </div>
+
+    <!-- Quick Terminal -->
+    <div class="terminal">
+      <button class="copy-btn" data-copy="nextflow run workflow/nextflow/main.nf --input my_mitogenomes.fasta --table 2 --circular">Copy</button>
+      <pre><span class="comment"># Run humaninFlow on any cohort mitogenome FASTA in one command</span>
+<span class="prompt">$</span> nextflow run workflow/nextflow/main.nf \
+    --input my_mitogenomes.fasta \
+    --metadata cohort_metadata.csv \
+    --outdir results/my_cohort \
+    --table 2 --circular</pre>
+    </div>
+  </div>
+</section>
+
+<!-- Section: Biological Architecture -->
+<section id="architecture" style="padding: 40px 0;">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Pipeline Architecture</h2>
+      <p>Decoupled stages ensuring data integrity, parallel discovery, and automatic metadata integration.</p>
+    </div>
+
+    <div class="schematic">
+      <div class="diagram-box">
+        <div class="stage">
+          <div class="stage-title">1. Pre-flight Validation (Linting)</div>
+          <div class="stage-desc">humanin-finder lint • Syntax, IUPAC characters &amp; Circular constraints</div>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="stage">
+          <div class="stage-title">2. Core Discovery Engine</div>
+          <div class="stage-desc">MT-RNR2 Profile HMM Synteny • Species Translation (Table 2/1/5) • PF15040 Domain</div>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="stage">
+          <div class="stage-title">3. Multi-Omics Cohort Synthesis</div>
+          <div class="stage-desc">Join Metadata (CSV/TSV) • Extract Unique Peptides FASTA • Markdown Report</div>
+        </div>
+        <div class="arrow-down">↓</div>
+        <div class="stage" style="border-color: var(--teal); background: var(--teal-soft);">
+          <div class="stage-title" style="color: var(--teal-ink);">4. Publication-Ready Outputs</div>
+          <div class="stage-desc" style="color: var(--teal-ink);">results.csv • results.fasta • results.gff3 • results.bed • run.json</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="feature">
+        <div class="feature-icon">⚡</div>
+        <h3>Dual Orchestration</h3>
+        <p>Identical biological logic executed seamlessly in <strong>Nextflow DSL2</strong> (for cloud, HPC/SLURM, container profiles) or <strong>Snakemake</strong> (for Conda and local workstations).</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🔍</div>
+        <h3>Nested sORF Resolution</h3>
+        <p>Solves the classic gene-finding failure inside structural RNA by mapping the homologous locus in <em>MT-RNR2</em> before translating species-specific reading frames.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <h3>Metadata Integration</h3>
+        <p>Directly binds prediction tables with sample clinical, epidemiological, geographical and experimental metadata (Tumor vs Normal, Clades, Breeds).</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section: Quick Start Tabs -->
+<section id="quickstart" style="padding: 40px 0;">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Getting Started</h2>
+      <p>Choose your workflow manager and execute in seconds.</p>
+    </div>
+
+    <div class="card">
+      <div class="tab-header">
+        <button class="tab-btn active" onclick="switchTab(event, 'tab-nextflow')">Nextflow DSL2</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-snakemake')">Snakemake</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-containers')">Containers (Docker/Singularity)</button>
+      </div>
+
+      <div id="tab-nextflow" class="tab-content">
+        <div class="terminal">
+          <button class="copy-btn">Copy</button>
+          <pre><span class="comment"># 1. Clone the repository</span>
+<span class="prompt">$</span> git clone https://github.com/LaBiOmicS/humaninFlow.git
+<span class="prompt">$</span> cd humaninFlow
+
+<span class="comment"># 2. Run with Nextflow on any FASTA dataset</span>
+<span class="prompt">$</span> nextflow run workflow/nextflow/main.nf \
+    --input examples/test_mitogenomes.fasta \
+    --metadata examples/test_metadata.csv \
+    --outdir results/nextflow \
+    --table 2 \
+    --circular</pre>
+        </div>
+      </div>
+
+      <div id="tab-snakemake" class="tab-content" style="display:none;">
+        <div class="terminal">
+          <button class="copy-btn">Copy</button>
+          <pre><span class="comment"># 1. Clone the repository</span>
+<span class="prompt">$</span> git clone https://github.com/LaBiOmicS/humaninFlow.git
+<span class="prompt">$</span> cd humaninFlow
+
+<span class="comment"># 2. Run with Snakemake</span>
+<span class="prompt">$</span> snakemake \
+    --snakefile workflow/snakemake/Snakefile \
+    --config input_fasta=../../examples/test_mitogenomes.fasta \
+             metadata=../../examples/test_metadata.csv \
+             outdir=../../results/snakemake \
+    --cores 4</pre>
+        </div>
+      </div>
+
+      <div id="tab-containers" class="tab-content" style="display:none;">
+        <div class="terminal">
+          <button class="copy-btn">Copy</button>
+          <pre><span class="comment"># Run Nextflow with official container images (zero local dependencies)</span>
+<span class="prompt">$</span> nextflow run workflow/nextflow/main.nf -profile docker --input data.fasta
+<span class="prompt">$</span> nextflow run workflow/nextflow/main.nf -profile apptainer --input data.fasta</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section: Recipes Matrix -->
+<section id="recipes" style="padding: 40px 0;">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Execution Recipes</h2>
+      <p>Practical commands tailored to specific genomic tasks.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card" style="margin-bottom: 0;">
+        <h3 style="margin-top:0;">1. Vertebrate Population Cohorts</h3>
+        <p style="color:var(--ink-2); font-size: .95rem;">Circular complete mitogenomes evaluated under vertebrate mitochondrial genetic code (Table 2):</p>
+        <div class="terminal">
+          <pre>nextflow run workflow/nextflow/main.nf \
+  --input mitogenomes.fasta \
+  --metadata cohort_metadata.csv \
+  --table 2 --circular</pre>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 0;">
+        <h3 style="margin-top:0;">2. Whole Nuclear Genome (NUMT) Search</h3>
+        <p style="color:var(--ink-2); font-size: .95rem;">Scan draft contigs or chromosomes for nuclear insertions under standard code (Table 1):</p>
+        <div class="terminal">
+          <pre>nextflow run workflow/nextflow/main.nf \
+  --input nuclear_wgs.fasta.gz \
+  --command scan --table 1 --circular false</pre>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 0;">
+        <h3 style="margin-top:0;">3. Invertebrates &amp; Non-Vertebrates</h3>
+        <p style="color:var(--ink-2); font-size: .95rem;">Execute with alternative codes, e.g. Table 5 for insects or Table 9 for echinoderms:</p>
+        <div class="terminal">
+          <pre>nextflow run workflow/nextflow/main.nf \
+  --input drosophila_mt.fasta \
+  --table 5 --circular</pre>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 0;">
+        <h3 style="margin-top:0;">4. Institutional HPC Cluster (SLURM)</h3>
+        <p style="color:var(--ink-2); font-size: .95rem;">Dispatch jobs to institutional compute clusters using Apptainer/Singularity containers:</p>
+        <div class="terminal">
+          <pre>nextflow run workflow/nextflow/main.nf \
+  -profile apptainer \
+  --input massive_cohort.fasta \
+  -process.executor slurm -process.queue batch</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section: Outputs -->
+<section id="outputs" style="padding: 40px 0;">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Outputs &amp; Data Dictionary</h2>
+      <p>Transparent, auditable data deliverables ready for downstream statistical and structural modeling.</p>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Deliverable</th>
+            <th>Format</th>
+            <th>Biological &amp; Technical Content</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>&lt;prefix&gt;_results.csv</code></td>
+            <td>CSV</td>
+            <td>Sample ID, peptide name (Humanin, SHLP1-6), frame status (Complete, Interrupted, Incomplete), coordinates, synteny bitscore, HMM bitscore.</td>
+          </tr>
+          <tr>
+            <td><code>&lt;prefix&gt;_results.fasta</code></td>
+            <td>FASTA</td>
+            <td>Translated amino acid sequences with detailed header annotations (coords, evidence tier).</td>
+          </tr>
+          <tr>
+            <td><code>&lt;prefix&gt;_results.gff3</code></td>
+            <td>GFF3</td>
+            <td>Standard 1-based genomic feature track for genome browsers (IGV, JBrowse).</td>
+          </tr>
+          <tr>
+            <td><code>&lt;prefix&gt;_results.bed</code></td>
+            <td>BED</td>
+            <td>0-based half-open coordinates with circular wrap blocks resolved.</td>
+          </tr>
+          <tr>
+            <td><code>cohort_humanin_summary.csv</code></td>
+            <td>CSV/TSV</td>
+            <td>Integrated master ledger merging locus predictions with user-supplied covariates (tumor/control, breed, country).</td>
+          </tr>
+          <tr>
+            <td><code>cohort_unique_peptides.fasta</code></td>
+            <td>FASTA</td>
+            <td>Non-redundant unique peptide variants found across the cohort, ranked by frequency.</td>
+          </tr>
+          <tr>
+            <td><code>COHORT_ANALYSIS_REPORT.md</code></td>
+            <td>Markdown</td>
+            <td>Executive report summarizing discovery rates, completeness percentages and variant distribution.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Section: Citation -->
+<section id="citation" style="padding: 40px 0;">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Citation &amp; Attribution</h2>
+      <p>If you use <strong>humaninFlow</strong> or <strong>HumaninFinder</strong> in published research, please cite:</p>
+    </div>
+
+    <div class="terminal">
+      <button class="copy-btn">Copy</button>
+      <pre>@software{humaninflow2026,
+  author  = {Dayhoff Genomics Lab and {Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)}},
+  title   = {{humaninFlow}: Scalable and Agnostic Workflows for Humanin and Mitochondrial Peptide Discovery},
+  year    = {2026},
+  url     = {https://github.com/LaBiOmicS/humaninFlow}
+}
+
+@article{humaninfinder2026,
+  author  = {Menegidio, Fabiano Bezerra and {LaBiOmicS}},
+  title   = {{HumaninFinder}: homology-first location and annotation of Humanin and SHLP1-6},
+  year    = {2026},
+  doi     = {10.5281/zenodo.24108118},
+  url     = {https://github.com/LaBiOmicS/humaninfinder}
+}</pre>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap footer-grid">
+    <div class="footer-col">
+      <div class="brand">
+        <svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0e7c6f"/><path d="M6 16h20M16 6v20M9 10l14 12" stroke="#fffdf9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="10" r="3" fill="#f0a04b"/><circle cx="23" cy="22" r="3" fill="#3cc7b2"/></svg>
+        humaninFlow
+      </div>
+      <p>Developed at the Laboratory of Bioinformatics and Omics Sciences (<strong>LaBiOmicS</strong>), Universidade de Mogi das Cruzes (UMC), Brazil.</p>
+      <p>Maintainer: Prof. Dr. Fabiano Bezerra Menegidio. Distributed under the MIT License.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Repositories</h4>
+      <p><a href="https://github.com/LaBiOmicS/humaninFlow">humaninFlow Pipeline</a></p>
+      <p><a href="https://github.com/LaBiOmicS/humaninfinder">HumaninFinder Core</a></p>
+      <p><a href="https://labiomics.github.io/humaninfinder/">HumaninFinder Web App</a></p>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <p><a href="https://github.com/LaBiOmicS/humaninFlow/issues">Report an Issue</a></p>
+      <p><a href="https://github.com/LaBiOmicS/humaninFlow/blob/main/CITATION.cff">Citation Metadata</a></p>
+      <p><a href="https://github.com/LaBiOmicS/humaninFlow/blob/main/LICENSE">MIT License</a></p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Theme toggle
+(function () {
+  var root = document.documentElement;
+  try { var saved = localStorage.getItem('hf-theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+  document.getElementById('theme').addEventListener('click', function () {
+    var cur = root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('hf-theme', next); } catch (e) {}
+  });
+
+  // Sticky nav border
+  var nav = document.getElementById('nav');
+  window.addEventListener('scroll', function () {
+    nav.classList.toggle('scrolled', window.scrollY > 10);
+  }, { passive: true });
+
+  // Copy code buttons
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.getAttribute('data-copy');
+      if (!text) {
+        var pre = btn.parentElement.querySelector('pre');
+        text = pre ? pre.innerText : '';
+      }
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function () {
+          var original = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(function () { btn.textContent = original; }, 1400);
+        });
+      }
+    });
+  });
+})();
+
+// Tab Switcher
+function switchTab(evt, tabId) {
+  document.querySelectorAll('.tab-content').forEach(function (el) { el.style.display = 'none'; });
+  document.querySelectorAll('.tab-btn').forEach(function (btn) { btn.classList.remove('active'); });
+  document.getElementById(tabId).style.display = 'block';
+  evt.currentTarget.classList.add('active');
+}
+</script>
+
+</body>
+</html>

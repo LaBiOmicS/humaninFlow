@@ -15,12 +15,13 @@ theme:
     - groovy
 
 nav:
-  - Home: index.md
+  - Overview: index.md
   - Quick Start: quickstart.md
   - Nextflow Pipeline: nextflow.md
   - Snakemake Pipeline: snakemake.md
   - Parameters & CLI: parameters.md
-  - Outputs & Downstream: outputs.md
+  - Recipes & Use Cases: recipes.md
+  - Outputs & Dictionary: outputs.md
   - Biological Methodology: methodology.md
   - FAQ: faq.md
 

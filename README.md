@@ -1,66 +1,134 @@
 <div align="center">
 
-# humaninFlow
+# `humaninFlow`
 
-### Scalable, Data-Agnostic Workflows for Humanin & Mitochondrial-Derived Peptide (MDP) Discovery
+### **High-Throughput, Data-Agnostic Workflows for Humanin & Mitochondrial-Derived Peptide (MDP) Discovery**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Nextflow](https://img.shields.io/badge/Nextflow-%E2%89%A524.04-23aa62.svg)](https://www.nextflow.io/)
-[![Snakemake](https://img.shields.io/badge/Snakemake-%E2%89%A58.0-blue.svg)](https://snakemake.github.io/)
-[![HumaninFinder](https://img.shields.io/badge/HumaninFinder-v1.0.0b4-orange.svg)](https://github.com/LaBiOmicS/humaninfinder)
-[![Documentation](https://img.shields.io/badge/Docs-GitHub%20Pages-brightgreen.svg)](https://labiomics.github.io/humaninFlow/)
+[![GitHub Release](https://img.shields.io/github/v/release/LaBiOmicS/humaninFlow?include_prereleases&color=0969da&label=Release)](https://github.com/LaBiOmicS/humaninFlow/releases)
+[![Nextflow](https://img.shields.io/badge/Nextflow-%E2%89%A524.04%20DSL2-23aa62?style=flat&logo=nextflow&logoColor=white)](https://www.nextflow.io/)
+[![Snakemake](https://img.shields.io/badge/Snakemake-%E2%89%A58.0-4a90e2?style=flat&logo=snakemake&logoColor=white)](https://snakemake.github.io/)
+[![Engine](https://img.shields.io/badge/Engine-HumaninFinder%20v1.0.0b4-f97316?style=flat&logo=python&logoColor=white)](https://github.com/LaBiOmicS/humaninfinder)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/Documentation-GitHub%20Pages-blue?style=flat&logo=github)](https://labiomics.github.io/humaninFlow/)
+[![CI](https://github.com/LaBiOmicS/humaninFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/LaBiOmicS/humaninFlow/actions/workflows/ci.yml)
 
-**[Documentation](https://labiomics.github.io/humaninFlow/)** •
-**[Quick Start](#quick-start)** •
-**[Nextflow](#nextflow-pipeline)** •
-**[Snakemake](#snakemake-pipeline)** •
-**[Outputs](#outputs)** •
-**[Citation](#citation)**
+<p align="center">
+  <b>A dual-engine pipeline framework developed by the Laboratory of Bioinformatics and Omics Sciences (<a href="https://github.com/LaBiOmicS">LaBiOmicS</a>)</b>
+</p>
+
+[📖 Documentation](https://labiomics.github.io/humaninFlow/) •
+[⚡ Quick Start](#-quick-start) •
+[🧬 Biological Motivation](#-biological-motivation) •
+[⚙️ Architecture](#-pipeline-architecture) •
+[🚀 Execution Modes](#-execution-modes) •
+[📊 Output Specifications](#-output-specifications) •
+[📚 Citation](#-citation)
 
 </div>
 
 ---
 
-## Overview
+## 📌 Executive Summary
 
-**humaninFlow** is a dual-engine workflow pipeline (**Nextflow DSL2** & **Snakemake**) for high-throughput, reproducible and automated prediction of **Humanin** and the six **Small Humanin-Like Peptides (SHLP1-6)** across complete mitogenomes, contigs, and nuclear assemblies.
+**`humaninFlow`** is an enterprise-grade, scalable, and data-agnostic workflow pipeline designed to identify, annotate, and characterize **Humanin** and the six **Small Humanin-Like Peptides (SHLP1–6)** across single mitogenomes, large-scale population cohorts, and whole nuclear genome assemblies.
 
-Powered by the latest git release of **[HumaninFinder](https://github.com/LaBiOmicS/humaninfinder)** (Laboratory of Bioinformatics and Omics Sciences — **LaBiOmicS**), `humaninFlow` abstracts data dependencies, automates sequence linting, scales parallel execution, and merges genomic predictions directly with epidemiological and clinical metadata.
+Implemented simultaneously in **Nextflow DSL2** and **Snakemake**, `humaninFlow` harnesses the core algorithms of **[HumaninFinder](https://github.com/LaBiOmicS/humaninfinder)**. It abstracts all software dependencies, parallelizes execution across local multi-core workstations or distributed HPC clusters, pre-validates FASTA syntax, and directly merges peptide discoveries with user-supplied epidemiological and clinical metadata.
+
+---
+
+## 🧬 Biological Motivation
+
+Mitochondrial-derived peptides (MDPs) are short functional micropeptides (20–40 amino acids) encoded by small open reading frames (sORFs) nested inside mitochondrial structural RNA genes:
+
+* **Humanin (HN):** A 21–24 aa cytoprotective peptide originally identified for its neuroprotective activity against amyloid-β and familial Alzheimer's disease mutants. Humanin binds directly to pro-apoptotic BCL-2 family proteins (**BAX** and **BID**), physically preventing outer mitochondrial membrane permeabilization (MOMP) and suppressing apoptotic cascades.
+* **SHLP1–6:** Six peptides encoded within the same *MT-RNR2* (16S rRNA) locus that regulate cell survival, insulin sensitivity, oxidative stress, and metabolic homeostasis.
+
+### The Annotation Problem
+Standard gene prediction suites (e.g., *Prodigal*, *Prokka*, *GeneMark*) fail to detect MDPs because:
+1. **Structural RNA Overlap:** The sORFs reside within the catalytic structure of the 16S ribosomal RNA gene (*MT-RNR2*).
+2. **Non-Canonical Translation:** Initiation often utilizes alternative non-AUG codons across eukaryotic lineages.
+3. **NUMTs & Pseudogenization:** Nuclear mitochondrial DNA insertions (NUMTs) accumulate substitutions and frameshifts across evolutionary time, requiring simultaneous assessment under mitochondrial (Table 2) and standard/cytosolic (Table 1) genetic codes.
+
+`humaninFlow` solves this through **profile HMM synteny mapping**, **clade-specific coordinate resolution**, and **HMM domain validation (PF15040)**.
+
+---
+
+## ⚙️ Pipeline Architecture
 
 ```
-                    ┌──────────────────────────────────────────┐
-                    │    Input FASTA (Mitogenomes / Contigs)   │
-                    └────────────────────┬─────────────────────┘
-                                         │
-                                         ▼
-                               [ Step 1: FASTA Lint ]
-                                         │
-                                         ▼
-                        [ Step 2: HumaninFinder Predict ]
-                          • MT-RNR2 Profile HMM Synteny
-                          • Species Frame Translation
-                          • Origin Wrap Resolution
-                                         │
-                                         ▼
-                         [ Step 3: Cohort Aggregation ]
-                          • Metadata Merging (CSV / TSV)
-                          • Unique Peptides Extraction
-                          • Markdown & CSV Reports
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                      Input: Any FASTA + Metadata                       │
+ │         (Mitogenomes, Viral/Bacterial Scaffolds, or Nuclear WGS)       │
+ └───────────────────────────────────┬────────────────────────────────────┘
+                                     │
+                                     ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                   Stage 1: Pre-flight FASTA Linting                   │
+ │           (Checks syntax, illegal IUPAC symbols, duplicate IDs)        │
+ └───────────────────────────────────┬────────────────────────────────────┘
+                                     │
+                                     ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                  Stage 2: HumaninFinder Discovery Core                 │
+ │   • Syntenic Mapping: Clade-specific MT-RNR2 Profile HMMs             │
+ │   • In Silico Reading: Species Genetic Code Translation (auto/2/1/5)  │
+ │   • Domain Verification: Pfam PF15040 Gathering Threshold Scoring      │
+ │   • Structural Wrap: Circular sequence boundary resolution (≤ 50 kb)   │
+ └───────────────────────────────────┬────────────────────────────────────┘
+                                     │
+                                     ▼
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                  Stage 3: Multi-Omics Cohort Synthesis                 │
+ │   • Metadata Merge: Prediction tables joined with sample covariates    │
+ │   • Variant Extraction: Non-redundant FASTA of unique peptide alleles  │
+ │   • Executive Reporting: Automated Markdown and TSV/CSV summaries      │
+ └───────────────────────────────────┬────────────────────────────────────┘
+                                     │
+                                     ▼
+                 ┌───────────────────┴───────────────────┐
+                 ▼                                       ▼
+    [ Raw Prediction Directory ]             [ Cohort Summary Directory ]
+     • <prefix>_results.csv                   • cohort_humanin_summary.csv
+     • <prefix>_results.fasta                 • cohort_humanin_summary.tsv
+     • <prefix>_results.gff3                  • cohort_unique_peptides.fasta
+     • <prefix>_results.bed                   • COHORT_ANALYSIS_REPORT.md
+     • <prefix>_run.json
 ```
 
 ---
 
-## Quick Start
+## ⚖️ Nextflow vs. Snakemake: Which Engine to Choose?
 
-### 1. Prerequisites
-* **Nextflow** ($\ge 24.04$) or **Snakemake** ($\ge 8.0$)
-* **Python** ($\ge 3.10$) with `humanin-finder` ($\ge \text{v1.0.0b4}$):
-  ```bash
-  pip install git+https://github.com/LaBiOmicS/humaninfinder.git
-  ```
+`humaninFlow` is distributed with first-class implementations in both major bioinformatics workflow managers:
+
+| Feature | Nextflow DSL2 | Snakemake |
+| :--- | :--- | :--- |
+| **Primary Use Case** | Cloud, institutional clusters, SLURM, and large batches | Local workstations, single-node servers, Conda-centric labs |
+| **Engine Executable** | `nextflow run workflow/nextflow/main.nf` | `snakemake --snakefile workflow/snakemake/Snakefile` |
+| **Containers Supported**| Docker, Apptainer/Singularity, Podman, Wave | Apptainer/Singularity, Docker |
+| **Environment Control** | Profiles (`local`, `conda`, `docker`, `apptainer`) | `config.yaml` or `--use-conda` |
+| **Execution Logging** | Detailed execution tracing (`.nextflow.log`, `-with-report`) | Snakemake DAG visualization and HTML report |
+
+---
+
+## ⚡ Quick Start
+
+### 1. Installation
+
+Clone the repository and install the latest `humanin-finder` release:
+
+```bash
+git clone https://github.com/LaBiOmicS/humaninFlow.git
+cd humaninFlow
+
+# Install the latest git version of HumaninFinder
+pip install git+https://github.com/LaBiOmicS/humaninfinder.git
+```
 
 ### 2. Run with Nextflow
+
 ```bash
+# Execute on standard test dataset
 nextflow run workflow/nextflow/main.nf \
   --input examples/test_mitogenomes.fasta \
   --metadata examples/test_metadata.csv \
@@ -70,7 +138,9 @@ nextflow run workflow/nextflow/main.nf \
 ```
 
 ### 3. Run with Snakemake
+
 ```bash
+# Execute via Snakemake
 snakemake \
   --snakefile workflow/snakemake/Snakefile \
   --config input_fasta=../../examples/test_mitogenomes.fasta \
@@ -81,40 +151,83 @@ snakemake \
 
 ---
 
-## Outputs
+## 🚀 Execution Modes & Practical Recipes
 
-Each pipeline run generates:
-* `results/raw_predictions/<prefix>_results.csv`: Complete table of all predicted frames and scores.
-* `results/raw_predictions/<prefix>_results.fasta`: FASTA file containing all translated peptides.
-* `results/raw_predictions/<prefix>_results.gff3` & `.bed`: Genomic coordinate annotation tracks.
-* `results/summary/cohort_humanin_summary.csv`: Aggregated table merged with user-supplied metadata.
-* `results/summary/cohort_unique_peptides.fasta`: Non-redundant unique peptide variants found across the cohort.
-* `results/summary/COHORT_ANALYSIS_REPORT.md`: Comprehensive executive report summarizing discovery rates.
+### Recipe 1: Population Mitogenomics (Vertebrates)
+Run on a multi-FASTA file of complete circular mitogenomes using vertebrate mitochondrial code (NCBI Table 2):
+```bash
+nextflow run workflow/nextflow/main.nf \
+  --input my_mitogenomes.fasta \
+  --metadata sample_metadata.csv \
+  --outdir results/vertebrate_cohort \
+  --table 2 \
+  --circular
+```
+
+### Recipe 2: NUMT Hunting in Nuclear Assemblies
+Screen draft contigs or nuclear scaffolds for transposed nuclear mitochondrial insertions, disabling circularity and reporting all non-redundant matches under standard code (Table 1):
+```bash
+nextflow run workflow/nextflow/main.nf \
+  --input nuclear_scaffolds.fasta.gz \
+  --command scan \
+  --table 1 \
+  --circular false \
+  --outdir results/numts_scan
+```
+
+### Recipe 3: High-Performance Computing via SLURM
+Submit jobs directly to an institutional HPC cluster via Nextflow:
+```bash
+nextflow run workflow/nextflow/main.nf \
+  -profile apptainer \
+  --input massive_cohort.fasta \
+  --outdir results/hpc_run \
+  -process.executor slurm \
+  -process.queue batch
+```
 
 ---
 
-## Documentation
+## 📊 Output Specifications
 
-Full documentation, parameter references, and container setup guides are available at:  
-👉 **[https://labiomics.github.io/humaninFlow/](https://labiomics.github.io/humaninFlow/)**
+All outputs are categorized into **raw predictions** and **cohort summary**:
+
+### Prediction Files (`results/raw_predictions/`)
+* **`<prefix>_results.csv`**: Tabular discovery ledger with coordinates, strand, frame status, profile scores, and deduced sequences.
+* **`<prefix>_results.fasta`**: Translated amino acid FASTA of all detected peptides.
+* **`<prefix>_results.gff3`**: Standard 1-based inclusive genomic feature tracks.
+* **`<prefix>_results.bed`**: 0-based half-open feature coordinates with circular wrap blocks.
+* **`<prefix>_run.json`**: Cryptographic provenance log (SHA-256 hash, parameters, software version).
+
+### Cohort Summary (`results/summary/`)
+* **`cohort_humanin_summary.csv` / `.tsv`**: Combined master table integrating predictions with all user metadata columns.
+* **`cohort_unique_peptides.fasta`**: Non-redundant multi-FASTA of all unique peptide alleles, ranked by observed frequency.
+* **`COHORT_ANALYSIS_REPORT.md`**: Executive markdown report detailing discovery rates, frame integrity percentages, and variant frequencies.
 
 ---
 
-## Citation
+## 📚 Citation
 
-If you use `humaninFlow` or `HumaninFinder` in your research, please cite:
+If you use **humaninFlow** or **HumaninFinder** in published research, please cite:
 
 ```bibtex
 @software{humaninflow2026,
-  author       = {Dayhoff Genomics Lab and LaBiOmicS},
+  author       = {Dayhoff Genomics Lab and Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)},
   title        = {humaninFlow: Scalable and Agnostic Workflows for Humanin and Mitochondrial Peptide Discovery},
   year         = {2026},
   url          = {https://github.com/LaBiOmicS/humaninFlow}
+}
+
+@article{humaninfinder2026,
+  author       = {Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)},
+  title        = {HumaninFinder: In Silico Location and Annotation of Mitochondrial-Derived Peptides},
+  year         = {2026},
+  url          = {https://github.com/LaBiOmicS/humaninfinder}
 }
 ```
 
 ---
 
-## License
+## 📄 License
 
-Distributed under the **MIT License**. See `LICENSE` for details.
+This project is licensed under the terms of the **MIT License**. See [`LICENSE`](LICENSE) for full details.
