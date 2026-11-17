@@ -216,7 +216,7 @@ If you use **humaninFlow** or **HumaninFinder** in published research, please ci
 
 ```bibtex
 @software{humaninflow,
-  author       = {{Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)}},
+  author       = {Menegidio, Fabiano Bezerra and {LaBiOmicS}},
   title        = {{humaninFlow}: Scalable and reproducible dual-engine workflow (Nextflow \& Snakemake) for high-throughput Humanin and mitochondrial-derived peptide discovery},
   version      = {1.0.0},
   year         = {2026},

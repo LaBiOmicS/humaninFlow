@@ -1,8 +1,10 @@
 cff-version: 1.2.0
 message: "If you use humaninFlow in your research, please cite it as below."
 authors:
-  - name: "Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)"
-    affiliation: "Universidade de Mogi das Cruzes (UMC)"
+  - family-names: Menegidio
+    given-names: Fabiano Bezerra
+    affiliation: "Universidade de Mogi das Cruzes"
+  - name: LaBiOmicS
 title: "humaninFlow: Scalable and Agnostic Workflows for Humanin and Mitochondrial Peptide Discovery"
 version: 1.0.0
 date-released: 2026-11-16
