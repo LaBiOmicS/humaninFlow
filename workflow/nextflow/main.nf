@@ -35,19 +35,6 @@ def helpMessage() {
     """.stripIndent()
 }
 
-if (params.help) {
-    helpMessage()
-    exit 0
-}
-
-// Validation of input
-if (!params.input) {
-    exit 1, "ERROR: Missing mandatory argument: --input <path_to_fasta>"
-}
-
-fasta_ch = Channel.fromPath(params.input, checkIfExists: true)
-meta_ch  = params.metadata ? Channel.fromPath(params.metadata, checkIfExists: true) : Channel.empty()
-
 process HUMANIN_LINT {
     tag "lint_${fasta.name}"
     label 'process_low'
@@ -63,6 +50,7 @@ process HUMANIN_LINT {
     echo "=== Running HumaninFinder Lint ==="
     humanin-finder lint "${fasta}"
     """
+}
 }
 
 process HUMANIN_RUN {
@@ -269,6 +257,18 @@ EOF
 }
 
 workflow {
+    if (params.help) {
+        helpMessage()
+        exit 0
+    }
+
+    if (!params.input) {
+        error "ERROR: Missing mandatory argument: --input <path_to_fasta>"
+    }
+
+    fasta_ch = Channel.fromPath(params.input, checkIfExists: true)
+    meta_ch  = params.metadata ? Channel.fromPath(params.metadata, checkIfExists: true) : Channel.empty()
+
     // 1. Lint the input FASTA
     HUMANIN_LINT(fasta_ch)
 
