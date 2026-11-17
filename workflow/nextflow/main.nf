@@ -119,7 +119,7 @@ process SUMMARIZE_COHORT {
 workflow {
     if (params.help) {
         helpMessage()
-        return
+        exit(0)
     }
     if (!params.input) {
         error "Missing mandatory argument: --input <fasta or glob>"
