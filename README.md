@@ -212,16 +212,17 @@ If you use **humaninFlow** or **HumaninFinder** in published research, please ci
 
 ```bibtex
 @software{humaninflow2026,
-  author       = {Dayhoff Genomics Lab and Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)},
+  author       = {{Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)}},
   title        = {humaninFlow: Scalable and Agnostic Workflows for Humanin and Mitochondrial Peptide Discovery},
   year         = {2026},
   url          = {https://github.com/LaBiOmicS/humaninFlow}
 }
 
 @article{humaninfinder2026,
-  author       = {Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)},
+  author       = {Menegidio, Fabiano Bezerra and {Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)}},
   title        = {HumaninFinder: In Silico Location and Annotation of Mitochondrial-Derived Peptides},
   year         = {2026},
+  doi          = {10.5281/zenodo.24108118},
   url          = {https://github.com/LaBiOmicS/humaninfinder}
 }
 ```
