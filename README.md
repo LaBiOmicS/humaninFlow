@@ -208,27 +208,42 @@ All outputs are categorized into **raw predictions** and **cohort summary**:
 
 ## 📚 Citation
 
-If you use **humaninFlow** or **HumaninFinder** in published research, please cite:
+If you use **humaninFlow** or **HumaninFinder** in published research, please cite the software version and repository as shown below. The accompanying scientific article is currently in preparation; this section will be updated when it is published.
 
 ```bibtex
-@software{humaninflow2026,
+@software{humaninflow,
   author       = {{Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)}},
-  title        = {humaninFlow: Scalable and Agnostic Workflows for Humanin and Mitochondrial Peptide Discovery},
+  title        = {{humaninFlow}: Scalable and reproducible dual-engine workflow (Nextflow \& Snakemake) for high-throughput Humanin and mitochondrial-derived peptide discovery},
+  version      = {1.0.0},
   year         = {2026},
   url          = {https://github.com/LaBiOmicS/humaninFlow}
 }
 
-@article{humaninfinder2026,
-  author       = {Menegidio, Fabiano Bezerra and {Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)}},
-  title        = {HumaninFinder: In Silico Location and Annotation of Mitochondrial-Derived Peptides},
+@software{humaninfinder,
+  author       = {Menegidio, Fabiano Bezerra and {LaBiOmicS}},
+  title        = {{HumaninFinder}: homology-first location and annotation of Humanin and SHLP1-6},
+  version      = {1.0.0b4},
   year         = {2026},
   doi          = {10.5281/zenodo.24108118},
   url          = {https://github.com/LaBiOmicS/humaninfinder}
 }
 ```
 
+Machine-readable citation metadata are provided in [`CITATION.cff`](CITATION.cff) (or via GitHub's **"Cite this repository"** button).
+
+---
+
+## 🏛️ Laboratory & Contact
+
+Developed and maintained by the **Laboratory of Bioinformatics and Omics Sciences (LaBiOmicS)**, Universidade de Mogi das Cruzes (UMC), São Paulo, Brazil.
+
+* **GitHub Organization**: [https://github.com/LaBiOmicS](https://github.com/LaBiOmicS)
+* **Workflow Repository**: [https://github.com/LaBiOmicS/humaninFlow](https://github.com/LaBiOmicS/humaninFlow)
+* **Core Engine**: [https://github.com/LaBiOmicS/humaninfinder](https://github.com/LaBiOmicS/humaninfinder)
+* **Questions & Issues**: [https://github.com/LaBiOmicS/humaninFlow/issues](https://github.com/LaBiOmicS/humaninFlow/issues)
+
 ---
 
 ## 📄 License
 
-This project is licensed under the terms of the **MIT License**. See [`LICENSE`](LICENSE) for full details.
+This project is released under the terms of the **MIT License**. See [`LICENSE`](LICENSE) for full details.
