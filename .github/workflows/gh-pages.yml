@@ -1,4 +1,4 @@
-name: Deploy Documentation to GitHub Pages
+name: Deploy Project Landing Page to GitHub Pages
 
 on:
   push:
@@ -8,23 +8,49 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Deploy to gh-pages branch (Legacy Support)
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p /tmp/site
+          cp docs/index.html /tmp/site/index.html
+          touch /tmp/site/.nojekyll
+          git checkout gh-pages || git checkout -b gh-pages
+          git rm -rf . 2>/dev/null || true
+          cp /tmp/site/index.html ./index.html
+          cp /tmp/site/.nojekyll ./.nojekyll
+          git add index.html .nojekyll
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "deploy: update landing page static site"
+            git push origin gh-pages --force
+          fi
+          git checkout main
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          python-version: '3.11'
+          path: './docs'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install mkdocs mkdocs-material
-
-      - name: Build and Deploy Documentation
-        run: |
-          mkdocs gh-deploy --force
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
