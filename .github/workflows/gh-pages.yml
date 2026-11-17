@@ -1,56 +1,62 @@
-name: Deploy Project Landing Page to GitHub Pages
+name: Deploy landing page
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths: ['docs/**', '.github/workflows/gh-pages.yml']
   workflow_dispatch:
 
+# Pages is configured with "GitHub Actions" as its source (build_type: workflow),
+# so the site is published from the uploaded artifact; no gh-pages branch is needed.
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check the page
+        run: |
+          test -s docs/index.html
+          test -f docs/.nojekyll
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          import re, sys
+          html = open("docs/index.html", encoding="utf-8").read()
+          ids, hrefs = set(), []
+          class P(HTMLParser):
+              def handle_starttag(self, tag, attrs):
+                  a = dict(attrs)
+                  if "id" in a: ids.add(a["id"])
+                  if tag == "a" and a.get("href", "").startswith("#") and len(a["href"]) > 1:
+                      hrefs.append(a["href"][1:])
+          P().feed(html)
+          missing = sorted(set(hrefs) - ids)
+          if missing:
+              sys.exit(f"Broken in-page links: {missing}")
+          print(f"OK: {len(ids)} ids, {len(hrefs)} in-page links resolve")
+          PY
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: docs
+
   deploy:
+    needs: build
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Deploy to gh-pages branch (Legacy Support)
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          mkdir -p /tmp/site
-          cp docs/index.html /tmp/site/index.html
-          touch /tmp/site/.nojekyll
-          git checkout gh-pages || git checkout -b gh-pages
-          git rm -rf . 2>/dev/null || true
-          cp /tmp/site/index.html ./index.html
-          cp /tmp/site/.nojekyll ./.nojekyll
-          git add index.html .nojekyll
-          if ! git diff-index --quiet HEAD; then
-            git commit -m "deploy: update landing page static site"
-            git push origin gh-pages --force
-          fi
-          git checkout main
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './docs'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4

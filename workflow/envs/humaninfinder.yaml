@@ -1,0 +1,11 @@
+# Runtime environment for both engines (Nextflow -profile conda, Snakemake --use-conda).
+# humanin-finder is pinned to the release the workflow is validated against.
+name: humaninfinder
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - humanin-finder==1.0.0b4

@@ -106,7 +106,7 @@ Standard gene prediction suites (e.g., *Prodigal*, *Prokka*, *GeneMark*) fail to
 | **Primary Use Case** | Cloud, institutional clusters, SLURM, and large batches | Local workstations, single-node servers, Conda-centric labs |
 | **Engine Executable** | `nextflow run workflow/nextflow/main.nf` | `snakemake --snakefile workflow/snakemake/Snakefile` |
 | **Containers Supported**| Docker, Apptainer/Singularity, Podman, Wave | Apptainer/Singularity, Docker |
-| **Environment Control** | Profiles (`local`, `conda`, `docker`, `apptainer`) | `config.yaml` or `--use-conda` |
+| **Environment Control** | Profiles (`conda`, `docker`, `apptainer`, `singularity`, `slurm`, `test`) | `config.yaml` + `--use-conda` / `--use-apptainer` |
 | **Execution Logging** | Detailed execution tracing (`.nextflow.log`, `-with-report`) | Snakemake DAG visualization and HTML report |
 
 ---
@@ -121,32 +121,35 @@ Clone the repository and install the latest `humanin-finder` release:
 git clone https://github.com/LaBiOmicS/humaninFlow.git
 cd humaninFlow
 
-# Install the latest git version of HumaninFinder
-pip install git+https://github.com/LaBiOmicS/humaninfinder.git
+# Either let a profile provide HumaninFinder (-profile docker|apptainer|conda, --use-conda, --use-apptainer)
+# or install the release the workflows are validated against:
+pip install humanin-finder==1.0.0b4
 ```
 
 ### 2. Run with Nextflow
 
 ```bash
-# Execute on standard test dataset
-nextflow run workflow/nextflow/main.nf \
-  --input examples/test_mitogenomes.fasta \
-  --metadata examples/test_metadata.csv \
-  --outdir results/nextflow \
+# Bundled example (human + mouse mitogenomes); drop ",docker" if humanin-finder is installed locally
+nextflow run workflow/nextflow/main.nf -profile test,docker
+
+# Your data: a single FASTA or a quoted glob, one cohort summary at the end
+nextflow run workflow/nextflow/main.nf -profile docker \
+  --input 'cohort/*.fasta' \
+  --metadata samples.csv \
   --table 2 \
-  --circular
+  --outdir results/nextflow
 ```
 
 ### 3. Run with Snakemake
 
 ```bash
-# Execute via Snakemake
-snakemake \
-  --snakefile workflow/snakemake/Snakefile \
-  --config input_fasta=../../examples/test_mitogenomes.fasta \
-           metadata=../../examples/test_metadata.csv \
-           outdir=../../results/snakemake \
-  --cores 4
+# Run from the repository root; paths are relative to where you run snakemake.
+# With no --config the bundled example data are used.
+snakemake -s workflow/snakemake/Snakefile --cores 4 \
+  --config input_fasta=examples/test_mitogenomes.fasta \
+           metadata=examples/test_metadata.csv \
+           outdir=results/snakemake
+# add --use-conda or --use-apptainer to let Snakemake provide HumaninFinder
 ```
 
 ---
@@ -179,10 +182,9 @@ nextflow run workflow/nextflow/main.nf \
 Submit jobs directly to an institutional HPC cluster via Nextflow:
 ```bash
 nextflow run workflow/nextflow/main.nf \
-  -profile apptainer \
-  --input massive_cohort.fasta \
+  -profile apptainer,slurm \
+  --input 'massive_cohort/*.fasta' \
   --outdir results/hpc_run \
-  -process.executor slurm \
   -process.queue batch
 ```
 
@@ -197,12 +199,14 @@ All outputs are categorized into **raw predictions** and **cohort summary**:
 * **`<prefix>_results.fasta`**: Translated amino acid FASTA of all detected peptides.
 * **`<prefix>_results.gff3`**: Standard 1-based inclusive genomic feature tracks.
 * **`<prefix>_results.bed`**: 0-based half-open feature coordinates with circular wrap blocks.
-* **`<prefix>_run.json`**: Cryptographic provenance log (SHA-256 hash, parameters, software version).
+* **`<prefix>_run.json`**: Run record (command line, options, software version, SHA-256 of the input).
 
 ### Cohort Summary (`results/summary/`)
 * **`cohort_humanin_summary.csv` / `.tsv`**: Combined master table integrating predictions with all user metadata columns.
 * **`cohort_unique_peptides.fasta`**: Non-redundant multi-FASTA of all unique peptide alleles, ranked by observed frequency.
-* **`COHORT_ANALYSIS_REPORT.md`**: Executive markdown report detailing discovery rates, frame integrity percentages, and variant frequencies.
+* **`COHORT_ANALYSIS_REPORT.md`**: Markdown report with counts per peptide and frame status, metadata match rate, and Humanin allele frequencies.
+
+Both engines call the same HumaninFinder release and the same summary script ([`workflow/scripts/merge_and_report.py`](workflow/scripts/merge_and_report.py)); CI fails unless their outputs on the example data are byte-for-byte identical.
 
 ---
 

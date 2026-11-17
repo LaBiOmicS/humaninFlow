@@ -2,52 +2,117 @@ name: Continuous Integration
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+    paths-ignore: ['docs/**', '**.md', 'CITATION.cff', '.github/workflows/gh-pages.yml']
   pull_request:
-    branches: [ main ]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HUMANIN_FINDER_VERSION: "1.0.0b4"
 
 jobs:
-  test-pipelines:
-    runs-on: ubuntu-latest
+  pipelines:
+    name: Pipelines (Nextflow ${{ matrix.nxf }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        nxf: ["24.04.4", "latest"]
+    # The newest Nextflow release is an early warning, not a merge blocker.
+    continue-on-error: ${{ matrix.nxf == 'latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: .github/workflows/ci.yml
 
-      - name: Set up Java for Nextflow
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: "17"
 
-      - name: Install Nextflow
+      - name: Install Nextflow ${{ matrix.nxf }}
+        env:
+          NXF_VER: ${{ matrix.nxf != 'latest' && matrix.nxf || '' }}
         run: |
-          curl -s https://get.nextflow.io | bash
+          curl -fsSL https://get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
+          nextflow -version
 
-      - name: Install Snakemake & HumaninFinder
+      - name: Install Snakemake and HumaninFinder
         run: |
           python -m pip install --upgrade pip
-          pip install snakemake
-          pip install git+https://github.com/LaBiOmicS/humaninfinder.git
+          pip install "snakemake>=8,<10" "humanin-finder==${HUMANIN_FINDER_VERSION}"
+          humanin-finder --version
+          snakemake --version
 
-      - name: Test Nextflow Pipeline
+      - name: Nextflow · example data
         run: |
-          nextflow run workflow/nextflow/main.nf \
-            --input examples/test_mitogenomes.fasta \
-            --metadata examples/test_metadata.csv \
-            --outdir results/test_nextflow \
-            --table 2 \
-            --circular
+          nextflow run workflow/nextflow/main.nf -profile test \
+            --outdir results/nextflow -ansi-log false
 
-      - name: Test Snakemake Pipeline
+      - name: Nextflow · multi-file glob, no metadata
         run: |
-          snakemake \
-            --snakefile workflow/snakemake/Snakefile \
-            --config input_fasta=../../examples/test_mitogenomes.fasta \
-                     metadata=../../examples/test_metadata.csv \
-                     outdir=../../results/test_snakemake \
-            --cores 2
+          mkdir -p results/split
+          awk '/^>/{n++} {print > "results/split/part" n ".fasta"}' examples/test_mitogenomes.fasta
+          nextflow run workflow/nextflow/main.nf --input 'results/split/*.fasta' \
+            --table 2 --outdir results/nextflow_glob -ansi-log false
+          test "$(ls results/nextflow_glob/raw_predictions/*_results.csv | wc -l)" -eq 2
+          grep -q 'Sequências com ao menos uma predição:\*\* 2' results/nextflow_glob/summary/COHORT_ANALYSIS_REPORT.md
+
+      - name: Snakemake · example data
+        run: |
+          snakemake -s workflow/snakemake/Snakefile --cores 2 \
+            --config outdir=results/snakemake table=2
+
+      - name: Engine parity (Nextflow vs Snakemake)
+        run: |
+          for f in cohort_humanin_summary.csv cohort_humanin_summary.tsv \
+                   cohort_unique_peptides.fasta COHORT_ANALYSIS_REPORT.md; do
+            cmp "results/nextflow/summary/$f" "results/snakemake/summary/$f"
+          done
+          cmp results/nextflow/raw_predictions/test_mitogenomes_results.csv \
+              results/snakemake/raw_predictions/test_mitogenomes_results.csv
+          echo "Both engines produced identical outputs."
+          cat results/nextflow/summary/COHORT_ANALYSIS_REPORT.md >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always() && matrix.nxf != 'latest'
+        with:
+          name: test-results
+          path: |
+            results/*/summary/
+            results/*/raw_predictions/
+          retention-days: 7
+
+  container-profile:
+    name: Nextflow · docker profile
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Install Nextflow
+        env:
+          NXF_VER: "24.04.4"
+        run: |
+          curl -fsSL https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Run with ghcr.io/labiomics/humaninfinder
+        run: |
+          nextflow run workflow/nextflow/main.nf -profile docker,test \
+            --outdir results/docker -ansi-log false
+          test -s results/docker/summary/cohort_humanin_summary.csv
