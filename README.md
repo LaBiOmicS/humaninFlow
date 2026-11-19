@@ -220,7 +220,7 @@ If you use **humaninFlow** or **HumaninFinder** in published research, please ci
 @software{humaninflow,
   author       = {Menegidio, Fabiano Bezerra and {LaBiOmicS}},
   title        = {{humaninFlow}: Scalable and reproducible dual-engine workflow (Nextflow \& Snakemake) for high-throughput Humanin and mitochondrial-derived peptide discovery},
-  version      = {1.0.0},
+  version      = {1.1.0},
   year         = {2026},
   url          = {https://github.com/LaBiOmicS/humaninFlow}
 }

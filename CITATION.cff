@@ -6,7 +6,7 @@ authors:
     affiliation: "Universidade de Mogi das Cruzes"
   - name: LaBiOmicS
 title: "humaninFlow: Scalable and Agnostic Workflows for Humanin and Mitochondrial Peptide Discovery"
-version: 1.0.0
-date-released: 2026-11-16
+version: 1.1.0
+date-released: 2026-11-19
 url: "https://github.com/LaBiOmicS/humaninFlow"
 license: MIT
