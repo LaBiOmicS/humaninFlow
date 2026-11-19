@@ -7,7 +7,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/LaBiOmicS/humaninFlow?include_prereleases&color=0969da&label=Release)](https://github.com/LaBiOmicS/humaninFlow/releases)
 [![Nextflow](https://img.shields.io/badge/Nextflow-%E2%89%A524.04%20DSL2-23aa62?style=flat&logo=nextflow&logoColor=white)](https://www.nextflow.io/)
 [![Snakemake](https://img.shields.io/badge/Snakemake-%E2%89%A58.0-4a90e2?style=flat&logo=snakemake&logoColor=white)](https://snakemake.github.io/)
-[![Engine](https://img.shields.io/badge/Engine-HumaninFinder%20v1.0.0b4-f97316?style=flat&logo=python&logoColor=white)](https://github.com/LaBiOmicS/humaninfinder)
+[![Engine](https://img.shields.io/badge/Engine-HumaninFinder%20v1.0.0b5-f97316?style=flat&logo=python&logoColor=white)](https://github.com/LaBiOmicS/humaninfinder)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/Documentation-GitHub%20Pages-blue?style=flat&logo=github)](https://labiomics.github.io/humaninFlow/)
 [![CI](https://github.com/LaBiOmicS/humaninFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/LaBiOmicS/humaninFlow/actions/workflows/ci.yml)
@@ -123,7 +123,7 @@ cd humaninFlow
 
 # Either let a profile provide HumaninFinder (-profile docker|apptainer|conda, --use-conda, --use-apptainer)
 # or install the release the workflows are validated against:
-pip install humanin-finder==1.0.0b4
+pip install humanin-finder==1.0.0b5
 ```
 
 ### 2. Run with Nextflow
@@ -195,7 +195,9 @@ nextflow run workflow/nextflow/main.nf \
 All outputs are categorized into **raw predictions** and **cohort summary**:
 
 ### Prediction Files (`results/raw_predictions/`)
-* **`<prefix>_results.csv`**: Tabular discovery ledger with coordinates, strand, frame status, profile scores, and deduced sequences.
+* **`<prefix>_results.csv`**: Tabular discovery ledger with coordinates, strand, frame status, profile scores (including `locus_density` and `locus_coverage`, which decide whether a frame is named `Humanin` or `Humanin_position`), and deduced sequences.
+
+HumaninFinder runs with `--threads` set to the CPUs of the job (Nextflow `process.cpus`, default 2; Snakemake `threads` in the config, default 4, capped by `--cores`). Results do not depend on the number of threads.
 * **`<prefix>_results.fasta`**: Translated amino acid FASTA of all detected peptides.
 * **`<prefix>_results.gff3`**: Standard 1-based inclusive genomic feature tracks.
 * **`<prefix>_results.bed`**: 0-based half-open feature coordinates with circular wrap blocks.
@@ -226,7 +228,7 @@ If you use **humaninFlow** or **HumaninFinder** in published research, please ci
 @software{humaninfinder,
   author       = {Menegidio, Fabiano Bezerra and {LaBiOmicS}},
   title        = {{HumaninFinder}: homology-first location and annotation of Humanin and SHLP1-6},
-  version      = {1.0.0b4},
+  version      = {1.0.0b5},
   year         = {2026},
   doi          = {10.5281/zenodo.24108118},
   url          = {https://github.com/LaBiOmicS/humaninfinder}

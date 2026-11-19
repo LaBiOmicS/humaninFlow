@@ -12,7 +12,7 @@ nextflow.enable.dsl = 2
 def helpMessage() {
     log.info """
     =======================================================================
-     humaninFlow · Nextflow pipeline (HumaninFinder 1.0.0b4)
+     humaninFlow · Nextflow pipeline (HumaninFinder 1.0.0b5)
     =======================================================================
      Usage:
        nextflow run workflow/nextflow/main.nf --input <fasta|glob> [options]
@@ -31,6 +31,9 @@ def helpMessage() {
        --no_rescue         Skip HMM-guided frame rescue
        --no_shlp           Skip SHLP1-6 annotation
        --no_synteny        Skip the MT-RNR2 synteny search
+
+     HumaninFinder runs with --threads set to the task's CPUs (process.cpus).
+     Outputs do not depend on the number of threads.
 
      Profiles: local, conda, docker, singularity, apptainer, slurm
     =======================================================================
@@ -83,6 +86,7 @@ process HUMANIN_RUN {
     humanin-finder ${params.command} \\
         -i "${fasta}" \\
         -o "${prefix}" \\
+        --threads ${task.cpus} \\
         ${args.join(' ')}
     """
 }

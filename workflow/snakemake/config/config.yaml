@@ -20,6 +20,7 @@ no_hmm: false               # skip the PF15040 HMM domain search
 no_rescue: false            # skip HMM-guided frame rescue
 no_shlp: false              # skip SHLP1-6 annotation
 no_synteny: false           # skip the MT-RNR2 synteny search
+threads: 4                  # worker processes for HumaninFinder (capped by --cores); outputs do not depend on it
 
 # humanin-finder executable (ignored inside --use-conda / --use-apptainer environments)
 humanin_finder_bin: "humanin-finder"
