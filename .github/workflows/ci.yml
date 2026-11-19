@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  HUMANIN_FINDER_VERSION: "1.0.0b4"
+  HUMANIN_FINDER_VERSION: "1.0.0b5"
 
 jobs:
   pipelines:

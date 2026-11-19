@@ -287,6 +287,7 @@ footer a:hover { color: var(--night-text); }
             <tr><td><code>--all_candidates</code></td><td><code>all_candidates</code></td><td><code>false</code></td><td>Report every candidate with <code>predict</code>.</td></tr>
             <tr><td><code>--no_hmm</code>, <code>--no_rescue</code></td><td><code>no_hmm</code>, <code>no_rescue</code></td><td><code>false</code></td><td>Skip the PF15040 search, or the HMM-guided frame rescue.</td></tr>
             <tr><td><code>--no_shlp</code>, <code>--no_synteny</code></td><td><code>no_shlp</code>, <code>no_synteny</code></td><td><code>false</code></td><td>Annotate Humanin only, or skip locating MT-RNR2 by synteny.</td></tr>
+            <tr><td><code>process.cpus</code></td><td><code>threads</code></td><td>2 / <code>4</code></td><td>Worker processes for HumaninFinder (<code>--threads</code>); results do not depend on it.</td></tr>
           </tbody>
         </table>
       </div>
@@ -313,7 +314,7 @@ footer a:hover { color: var(--night-text); }
         <h3>raw_predictions/</h3>
         <p class="hint">One set per input file.</p>
         <dl>
-          <dt>&lt;name&gt;_results.csv</dt><dd>Coordinates, strand, frame status, scores and sequence of each call.</dd>
+          <dt>&lt;name&gt;_results.csv</dt><dd>Coordinates, strand, frame status, scores (including MT-RNR2 locus density and coverage, which decide the <code>Humanin</code> name) and sequence of each call.</dd>
           <dt>&lt;name&gt;_results.gff3 · .bed · .fasta</dt><dd>Tracks for IGV or JBrowse 2, and the peptide sequences.</dd>
           <dt>&lt;name&gt;_run.json</dt><dd>Options, tool version and the SHA-256 of the input, for your methods section.</dd>
         </dl>
@@ -333,7 +334,7 @@ footer a:hover { color: var(--night-text); }
         <button type="button" data-bib="bib-flow">Copy BibTeX</button>
       </div>
       <div class="ref">
-        <p><b>HumaninFinder</b> 1.0.0b4 (2026). Menegidio, F. B. and LaBiOmicS. doi:10.5281/zenodo.24108118</p>
+        <p><b>HumaninFinder</b> 1.0.0b5 (2026). Menegidio, F. B. and LaBiOmicS. doi:10.5281/zenodo.24108118</p>
         <button type="button" data-bib="bib-finder">Copy BibTeX</button>
       </div>
     </div>
@@ -348,7 +349,7 @@ footer a:hover { color: var(--night-text); }
 <template id="bib-finder">@software{humaninfinder,
   author  = {Menegidio, Fabiano Bezerra and {LaBiOmicS}},
   title   = {{HumaninFinder}: homology-first location and annotation of Humanin and SHLP1-6},
-  version = {1.0.0b4},
+  version = {1.0.0b5},
   year    = {2026},
   doi     = {10.5281/zenodo.24108118},
   url     = {https://github.com/LaBiOmicS/humaninfinder}

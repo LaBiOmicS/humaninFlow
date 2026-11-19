@@ -42,7 +42,7 @@ CLI_FLAGS = " ".join(flags)
 PREFIX = re.sub(r"\.(fa|fasta|fna|fas)(\.gz)?$", "", os.path.basename(INPUT_FASTA))
 
 ENV       = os.path.join(workflow.basedir, "..", "envs", "humaninfinder.yaml")
-CONTAINER = "docker://ghcr.io/labiomics/humaninfinder:1.0.0b4"
+CONTAINER = "docker://ghcr.io/labiomics/humaninfinder:1.0.0b5"
 SUMMARIZE = os.path.join(workflow.basedir, "..", "scripts", "merge_and_report.py")
 
 RAW = os.path.join(OUTDIR, "raw_predictions")
@@ -85,10 +85,11 @@ rule predict:
         flags  = CLI_FLAGS,
     log:
         os.path.join(OUTDIR, "logs", f"{PREFIX}.{COMMAND}.log"),
+    threads: int(config.get("threads", 4))
     conda: ENV
     container: CONTAINER
     shell:
-        '{BIN} {COMMAND} -i "{input.fasta}" -o "{params.prefix}" {params.flags} > {log} 2>&1'
+        '{BIN} {COMMAND} -i "{input.fasta}" -o "{params.prefix}" --threads {threads} {params.flags} > {log} 2>&1'
 
 
 rule summarize:
